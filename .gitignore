@@ -1,0 +1,22 @@
+# Python / Django
+.venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+.env
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins-dependencies
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/app/google-services.json
+
+# Secrets - never commit these
+*service-account*.json
+*.keystore
+*.jks
+
+# macOS
+.DS_Store
