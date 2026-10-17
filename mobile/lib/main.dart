@@ -1,16 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MainApp());
+import 'core/analytics_service.dart';
+import 'core/api_client.dart';
+import 'core/session_store.dart';
+import 'screens/jobs_screen.dart';
+import 'screens/login_screen.dart';
+import 'state/auth_controller.dart';
+import 'state/jobs_controller.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final analytics = AnalyticsService();
+  await analytics.init();
+
+  final sessionStore = SessionStore();
+  final apiClient = ApiClient(baseUrl: await sessionStore.readBaseUrl());
+
+  runApp(
+    HelperPartnerApp(
+      analytics: analytics,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    ),
+  );
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class HelperPartnerApp extends StatelessWidget {
+  const HelperPartnerApp({
+    super.key,
+    required this.analytics,
+    required this.sessionStore,
+    required this.apiClient,
+  });
+
+  final AnalyticsService analytics;
+  final SessionStore sessionStore;
+  final ApiClient apiClient;
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(body: Center(child: Text('Hello World!'))),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthController(
+            apiClient: apiClient,
+            sessionStore: sessionStore,
+            analytics: analytics,
+          )..bootstrap(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => JobsController(apiClient: apiClient, analytics: analytics),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'EzyHelpers Partner',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D47A1)),
+          useMaterial3: true,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF0D47A1),
+            foregroundColor: Colors.white,
+          ),
+        ),
+        home: const _RootView(),
+      ),
     );
+  }
+}
+
+/// Picks the first screen once the stored session has been checked.
+class _RootView extends StatelessWidget {
+  const _RootView();
+
+  @override
+  Widget build(BuildContext context) {
+    final status = context.watch<AuthController>().status;
+
+    return switch (status) {
+      AuthStatus.checking => const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      AuthStatus.signedOut => const LoginScreen(),
+      AuthStatus.signedIn => const JobsScreen(),
+    };
   }
 }
