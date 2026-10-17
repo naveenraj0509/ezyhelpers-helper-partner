@@ -177,10 +177,30 @@ Three events are logged from `lib/core/analytics_service.dart`:
 | `job_viewed` | the detail screen loads a job | `job_id`, `status` |
 | `job_status_updated` | a status change succeeds | `job_id`, `from_status`, `to_status` |
 
+Events go to the development Firebase project **`ezyhelpers-helper-dev`**
+(app ID `1:979182633933:android:4688fc2e647560ae883a84`, package
+`com.ezyhelpers.helper_partner`). It is a throwaway project created for this exercise and
+holds no real data.
+
 `AnalyticsService` is deliberately fail-soft: if Firebase is not configured on the device it
 logs the event to the console and the app keeps working. Every event is also printed as
 `[analytics] <name> {params}`, so the flow is verifiable with `adb logcat -s flutter`
 even without the console.
+
+### Build configuration
+
+`mobile/android/app/google-services.json` is **not committed** — the assignment asks that
+config files stay out of the repository. It ships inside the APK, so the prebuilt APK needs
+nothing extra. To rebuild from source, either use the copy attached to the submission or
+regenerate it:
+
+```bash
+firebase apps:sdkconfig ANDROID 1:979182633933:android:4688fc2e647560ae883a84 \
+  --project ezyhelpers-helper-dev \
+  --out mobile/android/app/google-services.json
+```
+
+Without that file the Gradle build fails; drop it in and `flutter build apk --debug` works.
 
 ### Verifying in DebugView
 
@@ -207,7 +227,9 @@ Turn it off again with
 - **The APK needs a reachable backend.** There is no hosted environment, so the login screen
   exposes the server address instead of hard-coding one. A deployment was deliberately
   skipped in favour of finishing tests and documentation.
-- **The debug APK is large (~150 MB)** because a debug build ships every ABI unstripped.
+- **The universal debug APK is large (~150 MB)** because a debug build ships every ABI
+  unstripped. Per-ABI splits are also built (~50 MB each); use `arm64-v8a` for a physical
+  phone and `x86_64` for an emulator.
 - **No offline cache.** Losing connectivity shows an error state with a retry, not stale data.
 - **Status changes are not optimistic.** The button shows a spinner until the server answers,
   which is slower but never shows a state the backend disagreed with.
@@ -216,7 +238,8 @@ Turn it off again with
 
 **Completed:** backend with ownership and transition validation, all four endpoints, 10 tests,
 three Flutter screens on real APIs, loading/empty/error states, pull-to-refresh, session
-persistence, analytics events with console fallback, debug APK, feature branch and PR.
+persistence, three Firebase Analytics events verified in DebugView against a real dev
+project (with a console fallback when Firebase is absent), debug APK, feature branch and PR.
 
 **Deferred (stretch goals, not attempted):** FCM push notifications, Crashlytics, offline
 caching, CI workflow, Docker Compose. Pagination and status filtering are implemented on the
