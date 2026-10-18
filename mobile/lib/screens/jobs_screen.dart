@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../core/theme.dart';
 import '../models/job.dart';
 import '../state/auth_controller.dart';
 import '../state/jobs_controller.dart';
+import '../widgets/glass.dart';
 import '../widgets/status_chip.dart';
 import 'job_detail_screen.dart';
 
@@ -27,22 +29,12 @@ class _JobsScreenState extends State<JobsScreen> {
   Future<void> _refresh() => context.read<JobsController>().load(showSpinner: false);
 
   Future<void> _confirmSignOut() async {
-    final shouldSignOut = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You will need to sign in again to see your jobs.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
+    final shouldSignOut = await showGlassConfirm(
+      context,
+      title: 'Sign out?',
+      message: 'You will need to sign in again to see your jobs.',
+      confirmLabel: 'Sign out',
+      confirmColor: AppColors.danger,
     );
 
     if (shouldSignOut != true || !mounted) return;
@@ -55,40 +47,64 @@ class _JobsScreenState extends State<JobsScreen> {
     final auth = context.watch<AuthController>();
     final jobs = context.watch<JobsController>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My jobs'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(24),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Signed in as ${auth.helper?.fullName ?? ''}',
-                style: const TextStyle(fontSize: 13, color: Colors.white70),
+    return GlassScaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 16, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hello, ${_firstName(auth.helper?.fullName)}',
+                          style: const TextStyle(color: AppColors.inkSoft, fontSize: 14),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'My jobs',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GlassIconButton(icon: Icons.refresh_rounded, tooltip: 'Refresh', onPressed: _refresh),
+                  const SizedBox(width: 10),
+                  GlassIconButton(
+                    icon: Icons.logout_rounded,
+                    tooltip: 'Sign out',
+                    iconColor: AppColors.ink,
+                    onPressed: _confirmSignOut,
+                  ),
+                ],
               ),
             ),
-          ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                backgroundColor: Colors.white,
+                child: _buildBody(jobs),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh),
-          ),
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: _confirmSignOut,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: _buildBody(jobs),
       ),
     );
+  }
+
+  String _firstName(String? fullName) {
+    final name = (fullName ?? '').trim();
+    return name.isEmpty ? 'there' : name.split(' ').first;
   }
 
   Widget _buildBody(JobsController jobs) {
@@ -132,9 +148,9 @@ class _JobsScreenState extends State<JobsScreen> {
 
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       itemCount: jobs.jobs.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 14),
       itemBuilder: (context, index) => _JobCard(job: jobs.jobs[index]),
     );
   }
@@ -149,42 +165,39 @@ class _JobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final time = DateFormat('d MMM, h:mm a').format(job.scheduledFor);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
+    return GlassTappable(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => JobDetailScreen(jobId: job.id)),
       ),
-      child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => JobDetailScreen(jobId: job.id)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      job.title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      child: GlassContainer(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    job.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  StatusChip(status: job.status),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _IconLine(icon: Icons.person_outline, text: job.customerName),
-              const SizedBox(height: 4),
-              _IconLine(icon: Icons.schedule, text: time),
-              const SizedBox(height: 4),
-              _IconLine(icon: Icons.place_outlined, text: job.address, maxLines: 1),
-            ],
-          ),
+                ),
+                const SizedBox(width: 10),
+                StatusChip(status: job.status),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _IconLine(icon: Icons.person_outline_rounded, text: job.customerName),
+            const SizedBox(height: 8),
+            _IconLine(icon: Icons.schedule_rounded, text: time),
+            const SizedBox(height: 8),
+            _IconLine(icon: Icons.place_outlined, text: job.address, maxLines: 1),
+          ],
         ),
       ),
     );
@@ -201,16 +214,16 @@ class _IconLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        const SizedBox(width: 8),
+        Icon(icon, size: 17, color: AppColors.primary),
+        const SizedBox(width: 10),
         Expanded(
           child: Text(
             text,
             maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+            style: const TextStyle(color: AppColors.inkSoft, fontSize: 14),
           ),
         ),
       ],

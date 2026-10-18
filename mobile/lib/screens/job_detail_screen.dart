@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api_client.dart';
+import '../core/theme.dart';
 import '../models/job.dart';
 import '../state/jobs_controller.dart';
+import '../widgets/glass.dart';
 import '../widgets/status_chip.dart';
 
 class JobDetailScreen extends StatefulWidget {
@@ -42,7 +44,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: const Color(0xFFB71C1C),
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -56,30 +58,56 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Job details')),
-      body: FutureBuilder<Job>(
-        future: _jobFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return GlassScaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(
+                children: [
+                  GlassIconButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const SizedBox(width: 14),
+                  const Text(
+                    'Job details',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: FutureBuilder<Job>(
+                future: _jobFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-          if (snapshot.hasError) {
-            final error = snapshot.error;
-            return MessageView(
-              icon: Icons.error_outline,
-              title: 'Could not load this job',
-              message: error is ApiException ? error.message : error.toString(),
-              onRetry: _reload,
-            );
-          }
+                  if (snapshot.hasError) {
+                    final error = snapshot.error;
+                    return MessageView(
+                      icon: Icons.error_outline_rounded,
+                      title: 'Could not load this job',
+                      message: error is ApiException ? error.message : error.toString(),
+                      onRetry: _reload,
+                    );
+                  }
 
-          return _JobDetailBody(
-            job: snapshot.data!,
-            onChangeStatus: _changeStatus,
-          );
-        },
+                  return _JobDetailBody(
+                    job: snapshot.data!,
+                    onChangeStatus: _changeStatus,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -102,54 +130,70 @@ class _JobDetailBody extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      current.title,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              GlassContainer(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        current.title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                          height: 1.2,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  StatusChip(status: current.status),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _DetailTile(
-                icon: Icons.schedule,
-                label: 'Scheduled for',
-                value: DateFormat('EEEE, d MMMM yyyy • h:mm a').format(current.scheduledFor),
-              ),
-              _DetailTile(
-                icon: Icons.person_outline,
-                label: 'Customer',
-                value: current.customerName,
-              ),
-              if (current.customerPhone.isNotEmpty)
-                _DetailTile(
-                  icon: Icons.phone_outlined,
-                  label: 'Phone',
-                  value: current.customerPhone,
+                    const SizedBox(width: 12),
+                    StatusChip(status: current.status),
+                  ],
                 ),
-              _DetailTile(
-                icon: Icons.place_outlined,
-                label: 'Address',
-                value: current.address,
               ),
-              if (current.description.isNotEmpty)
-                _DetailTile(
-                  icon: Icons.notes_outlined,
-                  label: 'Notes',
-                  value: current.description,
+              const SizedBox(height: 14),
+              GlassContainer(
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 2),
+                child: Column(
+                  children: [
+                    _DetailTile(
+                      icon: Icons.schedule_rounded,
+                      label: 'Scheduled for',
+                      value: DateFormat('EEEE, d MMMM yyyy • h:mm a').format(current.scheduledFor),
+                    ),
+                    _DetailTile(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Customer',
+                      value: current.customerName,
+                                    ),
+                    if (current.customerPhone.isNotEmpty)
+                      _DetailTile(
+                        icon: Icons.phone_outlined,
+                        label: 'Phone',
+                        value: current.customerPhone,
+                      ),
+                    _DetailTile(
+                      icon: Icons.place_outlined,
+                      label: 'Address',
+                      value: current.address,
+                    ),
+                    if (current.description.isNotEmpty)
+                      _DetailTile(
+                        icon: Icons.notes_rounded,
+                        label: 'Notes',
+                        value: current.description,
+                      ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),
         SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
             child: _ActionButton(
               nextStatus: nextStatus,
               isUpdating: isUpdating,
@@ -176,54 +220,45 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (nextStatus == null) {
-      return const SizedBox(
-        width: double.infinity,
-        child: Card(
-          color: Color(0xFFE8F5E9),
-          elevation: 0,
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle, color: Color(0xFF1B5E20)),
-                SizedBox(width: 8),
-                Text(
-                  'This job is complete',
-                  style: TextStyle(color: Color(0xFF1B5E20), fontWeight: FontWeight.w600),
-                ),
-              ],
+      return const GlassContainer(
+        radius: 29,
+        padding: EdgeInsets.symmetric(vertical: 18),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_rounded, color: AppColors.success),
+            SizedBox(width: 8),
+            Text(
+              'This job is complete',
+              style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 16),
             ),
-          ),
+          ],
         ),
       );
     }
 
-    final label = switch (nextStatus!) {
-      JobStatus.inProgress => 'Start job',
-      JobStatus.completed => 'Mark as completed',
-      JobStatus.assigned => 'Update status',
+    final (label, icon, color) = switch (nextStatus!) {
+      JobStatus.inProgress => ('Start job', Icons.play_arrow_rounded, AppColors.primary),
+      JobStatus.completed => ('Mark as completed', Icons.check_rounded, AppColors.primary),
+      JobStatus.assigned => ('Update status', Icons.sync_rounded, AppColors.primary),
     };
 
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        onPressed: isUpdating ? null : onPressed,
-        style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-        child: isUpdating
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : Text(label),
-      ),
+    return GlassButton(
+      label: label,
+      icon: icon,
+      color: color,
+      loading: isUpdating,
+      onPressed: isUpdating ? null : onPressed,
     );
   }
 }
 
 class _DetailTile extends StatelessWidget {
-  const _DetailTile({required this.icon, required this.label, required this.value});
+  const _DetailTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   final IconData icon;
   final String label;
@@ -236,19 +271,26 @@ class _DetailTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
+          GlassIconBadge(icon: icon),
           const SizedBox(width: 14),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 15)),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkSoft,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(value, style: const TextStyle(fontSize: 15.5, height: 1.3)),
+                ],
+              ),
             ),
           ),
         ],

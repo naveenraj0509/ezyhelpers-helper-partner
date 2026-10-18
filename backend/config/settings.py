@@ -16,6 +16,10 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 # Wide open so the Android emulator (10.0.2.2) and a phone on the LAN can both reach it.
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
+# Render sets this to the service's public hostname; trust it for admin login over HTTPS.
+_render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+CSRF_TRUSTED_ORIGINS = [f"https://{_render_host}"] if _render_host else []
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -30,6 +34,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -77,6 +82,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # collected for the Django admin on Render
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {

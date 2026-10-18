@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import 'core/analytics_service.dart';
 import 'core/api_client.dart';
 import 'core/session_store.dart';
+import 'core/theme.dart';
 import 'screens/jobs_screen.dart';
 import 'screens/login_screen.dart';
 import 'state/auth_controller.dart';
 import 'state/jobs_controller.dart';
+import 'widgets/glass.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,14 +59,7 @@ class HelperPartnerApp extends StatelessWidget {
       child: MaterialApp(
         title: 'EzyHelpers Partner',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0D47A1)),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF0D47A1),
-            foregroundColor: Colors.white,
-          ),
-        ),
+        theme: buildAppTheme(),
         home: const _RootView(),
       ),
     );
@@ -80,7 +75,7 @@ class _RootView extends StatelessWidget {
     final status = context.watch<AuthController>().status;
 
     return switch (status) {
-      AuthStatus.checking => const Scaffold(
+      AuthStatus.checking => const GlassScaffold(
           body: Center(child: CircularProgressIndicator()),
         ),
       AuthStatus.signedOut => const LoginScreen(),

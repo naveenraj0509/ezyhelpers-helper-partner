@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ezyhelpers-helper-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    # The free tier has an ephemeral disk, so SQLite is rebuilt and re-seeded on every start.
+    startCommand: python manage.py migrate --noinput && python manage.py seed_demo && gunicorn config.wsgi:application
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
