@@ -60,7 +60,7 @@ your machine's LAN IP (for example `http://192.168.1.5:8000`) on a physical phon
 
 | Username | Password | Jobs |
 | --- | --- | --- |
-| `asha` | `helper1234` | 4 (one of each status) |
+| `asha` | `helper1234` | 4 (2 assigned, 1 in progress, 1 completed) |
 | `ravi` | `helper1234` | 2 |
 | `admin` | `helper1234` | Django admin at `/admin/` |
 
