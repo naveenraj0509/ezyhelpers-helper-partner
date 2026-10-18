@@ -31,7 +31,8 @@ class ApiClient {
       : _baseUrl = normalizeBaseUrl(baseUrl),
         _httpClient = httpClient ?? http.Client();
 
-  static const Duration _timeout = Duration(seconds: 15);
+  // Generous because the free-tier host sleeps when idle and takes ~30-60s to wake.
+  static const Duration _timeout = Duration(seconds: 60);
 
   final http.Client _httpClient;
   String _baseUrl;

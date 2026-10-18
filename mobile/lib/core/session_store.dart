@@ -10,8 +10,9 @@ class SessionStore {
   static const _helperNameKey = 'helper_full_name';
   static const _baseUrlKey = 'base_url';
 
-  /// The Android emulator reaches the host machine's localhost on 10.0.2.2.
-  static const defaultBaseUrl = 'http://10.0.2.2:8000';
+  /// Hosted demo backend (Render free tier). For a local server use
+  /// http://10.0.2.2:8000 on the emulator, or your machine's LAN IP on a phone.
+  static const defaultBaseUrl = 'https://ezyhelpers-helper-api.onrender.com';
 
   Future<String?> readToken() async {
     final prefs = await SharedPreferences.getInstance();

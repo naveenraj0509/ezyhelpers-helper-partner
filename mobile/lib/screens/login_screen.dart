@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       autocorrect: false,
                                       decoration: const InputDecoration(
                                         labelText: 'Backend base URL',
-                                        helperText: 'Emulator: http://10.0.2.2:8000',
+                                        helperText: 'Local emulator: http://10.0.2.2:8000',
                                         prefixIcon: Icon(Icons.dns_outlined),
                                       ),
                                       validator: (value) => (value == null || value.trim().isEmpty)
