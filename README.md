@@ -229,6 +229,15 @@ adb shell setprop debug.firebase.analytics.app com.ezyhelpers.helper_partner
 Turn it off again with
 `adb shell setprop debug.firebase.analytics.app .none.`
 
+Captured from the `ezyhelpers-helper-dev` project while using the app. `login_success`
+arrives on sign-in:
+
+![Firebase DebugView showing login_success](mobile/debugview/login_success.png)
+
+`job_viewed` and `job_status_updated` arrive after opening a job and changing its status:
+
+![Firebase DebugView showing job_viewed and job_status_updated](mobile/debugview/job_events.png)
+
 ---
 
 ## Known limitations and trade-offs
