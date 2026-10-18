@@ -15,14 +15,27 @@ personal information are involved.
 
 ---
 
-## Quick start
+## Try it without installing anything locally
+
+The backend is hosted on Render's free tier:
+
+**https://ezyhelpers-helper-api.onrender.com** (health check: `/api/health/`)
+
+Install the debug APK from the [latest release](../../releases/latest) and sign in with
+`asha` / `helper1234`. The app points at the hosted backend by default.
+
+> The free tier sleeps after ~15 minutes idle, so the **first request can take 30-60 seconds**
+> (the app waits up to 60 s). The database is also rebuilt and re-seeded on every restart, so
+> job statuses you change are reset to the demo data after a sleep.
+
+## Quick start (run it yourself)
 
 ### 1. Backend
 
 ```bash
 cd backend
 python3 -m venv .venv
-.venv/bin/pip install django djangorestframework
+.venv/bin/pip install -r requirements.txt
 .venv/bin/python manage.py migrate
 .venv/bin/python manage.py seed_demo
 .venv/bin/python manage.py runserver 0.0.0.0:8000
@@ -39,9 +52,9 @@ flutter pub get
 flutter run           # with an emulator or device attached
 ```
 
-The login screen has a collapsible **Server address** field, pre-filled with
-`http://10.0.2.2:8000`. Change it to your machine's LAN IP (for example
-`http://192.168.1.5:8000`) to run the APK on a physical phone.
+The login screen has a collapsible **Server address** field, pre-filled with the hosted
+backend above. To use a local server instead, enter `http://10.0.2.2:8000` on the emulator or
+your machine's LAN IP (for example `http://192.168.1.5:8000`) on a physical phone.
 
 ### Demo accounts
 
@@ -134,11 +147,11 @@ Two rules carry the safety requirements:
 
 ```
 mobile/lib/
-├── core/        # ApiClient, SessionStore, AnalyticsService
+├── core/        # ApiClient, SessionStore, AnalyticsService, theme
 ├── models/      # Job, JobStatus, Helper
 ├── state/       # AuthController, JobsController (ChangeNotifier)
 ├── screens/     # login, jobs list, job details
-└── widgets/     # StatusChip, MessageView
+└── widgets/     # StatusChip, glass-effect widgets (GlassScaffold, ...)
 ```
 
 Screens read state and never talk to HTTP directly. `JobsController` exposes an explicit
@@ -224,12 +237,13 @@ Turn it off again with
   to one command. The ORM code is database-agnostic.
 - **Token auth with non-expiring tokens.** DRF's built-in `TokenAuthentication` is the right
   size for a 48-hour exercise; production would want JWT with refresh and rotation.
-- **The APK needs a reachable backend.** There is no hosted environment, so the login screen
-  exposes the server address instead of hard-coding one. A deployment was deliberately
-  skipped in favour of finishing tests and documentation.
-- **The universal debug APK is large (~150 MB)** because a debug build ships every ABI
-  unstripped. Per-ABI splits are also built (~50 MB each); use `arm64-v8a` for a physical
-  phone and `x86_64` for an emulator.
+- **Free-tier hosting.** The Render service sleeps when idle (30-60 s cold start) and its disk
+  is ephemeral, so SQLite is migrated and re-seeded on every start (see `render.yaml`). Fine
+  for a demo; a real deployment would use managed PostgreSQL. The server address stays
+  editable on the login screen for local runs.
+- **The universal debug APK is large (~170 MB)** because a debug build ships every ABI
+  unstripped. `flutter build apk --debug --split-per-abi` produces smaller per-ABI files;
+  use `arm64-v8a` for a physical phone and `x86_64` for an emulator.
 - **No offline cache.** Losing connectivity shows an error state with a retry, not stale data.
 - **Status changes are not optimistic.** The button shows a spinner until the server answers,
   which is slower but never shows a state the backend disagreed with.
@@ -239,7 +253,7 @@ Turn it off again with
 **Completed:** backend with ownership and transition validation, all four endpoints, 10 tests,
 three Flutter screens on real APIs, loading/empty/error states, pull-to-refresh, session
 persistence, three Firebase Analytics events verified in DebugView against a real dev
-project (with a console fallback when Firebase is absent), debug APK, feature branch and PR.
+project (with a console fallback when Firebase is absent), debug APK, backend hosted on Render, feature branch and PR.
 
 **Deferred (stretch goals, not attempted):** FCM push notifications, Crashlytics, offline
 caching, CI workflow, Docker Compose. Pagination and status filtering are implemented on the
