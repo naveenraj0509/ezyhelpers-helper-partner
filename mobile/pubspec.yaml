@@ -1,14 +1,21 @@
 name: helper_partner
-description: "A new Flutter project."
+description: "EzyHelpers helper-partner mini app: sign in, see assigned jobs, update progress."
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.13.2
+  sdk: ^3.13.0
 
 dependencies:
   flutter:
     sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.2.2
+  provider: ^6.1.2
+  shared_preferences: ^2.3.2
+  intl: ^0.20.2
+  firebase_core: ^4.1.1
+  firebase_analytics: ^12.0.1
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +24,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/ezyhelper_logo_new.png
